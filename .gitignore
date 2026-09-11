@@ -1,0 +1,23 @@
+node_modules
+dist
+
+# Secrets — never commit. Copy .env.example to .env and fill it in.
+.env
+.env.local
+
+# ─────────────────────────────────────────────────────────────────
+# LIVE DATA. These are deliberately ignored so a `git push` cannot
+# overwrite your shop's real database, and a `git pull` cannot wipe
+# it. They must be BACKED UP separately — see "Your data" in
+# README.md. Everything the shop knows lives here:
+#   • products, categories, offers   • orders & order items
+#   • customer accounts & passwords  • carts, wishlists, reviews
+# ─────────────────────────────────────────────────────────────────
+server/data/*.db
+server/data/*.db-wal
+server/data/*.db-shm
+backups/
+
+# Customer/admin uploaded product photos — also real data, back these up too.
+public/uploads/*
+!public/uploads/.gitkeep
