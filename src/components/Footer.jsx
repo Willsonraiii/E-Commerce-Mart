@@ -14,7 +14,7 @@ const socials = [
 ]
 
 export default function Footer() {
-  const { categories } = useCatalog()
+  const { store, hoursText, categories } = useCatalog()
   const { notify } = useCart()
 
   return (
@@ -58,7 +58,7 @@ export default function Footer() {
         <div id="about">
           <Logo light stacked className="h-[112px]" />
           <p className="mt-4 max-w-sm text-[.92rem] leading-relaxed text-mint/70">
-            <b className="text-paper">{storeInfo.tagline}</b> A neighborhood store in New Baneshwor —
+            <b className="text-paper">{store.tagline}</b> A neighborhood store in New Baneshwor —
             groceries, produce and household essentials without the warehouse run.
           </p>
           <div className="mt-5 flex gap-2">
@@ -112,19 +112,19 @@ export default function Footer() {
         <div>
           <h3 className="mb-4 font-display text-[1.05rem] text-paper">Visit the shop</h3>
           <ul className="flex flex-col gap-3 text-[.9rem] text-mint/70">
-            <li className="flex gap-2.5"><PinIcon size={17} className="mt-0.5 shrink-0 text-leaf-glow" />{storeInfo.address}</li>
+            <li className="flex gap-2.5"><PinIcon size={17} className="mt-0.5 shrink-0 text-leaf-glow" />{store.address}</li>
             <li className="flex gap-2.5">
               <PhoneIcon size={17} className="mt-0.5 shrink-0 text-leaf-glow" />
-              <a href={`tel:${storeInfo.phone.replace(/\s/g, '')}`} className="hover:text-leaf-glow">{storeInfo.phone}</a>
+              <a href={`tel:${(store.phone||'').replace(/\s/g, '')}`} className="hover:text-leaf-glow">{store.phone}</a>
             </li>
             <li className="flex gap-2.5">
               <MailIcon size={17} className="mt-0.5 shrink-0 text-leaf-glow" />
-              <a href={`mailto:${storeInfo.email}`} className="break-all hover:text-leaf-glow">{storeInfo.email}</a>
+              <a href={`mailto:${store.email}`} className="break-all hover:text-leaf-glow">{store.email}</a>
             </li>
             <li className="flex gap-2.5">
               <ClockIcon size={17} className="mt-0.5 shrink-0 text-leaf-glow" />
               <span className="flex flex-col">
-                {storeInfo.hours.map((h) => <span key={h.days}>{h.days}: {h.time}</span>)}
+                {hoursText.map((h) => <span key={h.days}>{h.days}: {h.time}</span>)}
               </span>
             </li>
           </ul>

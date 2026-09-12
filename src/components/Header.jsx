@@ -5,6 +5,7 @@ import Logo from './Logo'
 import { Magnetic, Marquee } from './ui/Aceternity'
 import { SearchIcon, BagIcon, UserIcon, MenuIcon, CloseIcon, HeartIcon, TruckIcon, SparkIcon, LeafIcon } from './Icons'
 import { cn, navLinks, storeInfo, initials } from '../lib/utils'
+import { useCatalog } from '../context/CatalogContext'
 import { useCart } from '../context/CartContext'
 import { useAuth } from '../context/AuthContext'
 
@@ -17,6 +18,7 @@ const TICKER = [
 
 export default function Header() {
   const { cartCount, setCartOpen, setSearchOpen, menuOpen, setMenuOpen, wishlist } = useCart()
+  const { store } = useCatalog()
   const { user, isAdmin } = useAuth()
   const [solid, setSolid] = useState(false)
   const { scrollY } = useScroll()
@@ -198,42 +200,61 @@ export default function Header() {
           </div>
         </div>
 
-        {/* mobile drawer */}
+        {/*
+          Mobile menu — OVERLAY, never in flow.
+          It used to animate height 0 -> auto inside the header, which pushed
+          the whole page down. Now it is `fixed`, so the homepage stays exactly
+          where it is and the panel floats above it on frosted iOS glass.
+          It is a card, not a takeover: auto height, capped width, page still
+          visible around it.
+        */}
         <AnimatePresence>
           {menuOpen && (
-            <motion.nav
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.34, ease: [0.22, 0.8, 0.25, 1] }}
-              className="overflow-hidden border-b border-line bg-paper lg:hidden"
-            >
-              <div className="wrap flex flex-col gap-1 py-4">
+            <>
+              <motion.button
+                key="menu-scrim"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.22 }}
+                onClick={() => setMenuOpen(false)}
+                aria-label="Close menu"
+                className="fixed inset-0 z-[58] cursor-default bg-forest-deep/25 backdrop-blur-[2px] lg:hidden"
+              />
+              <motion.nav
+                key="menu-panel"
+                initial={{ opacity: 0, y: -10, scale: 0.97 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ type: 'spring', stiffness: 420, damping: 32, mass: 0.7 }}
+                style={{ top: 'calc(var(--header) + 8px)' }}
+                className="glass-panel fixed right-3 z-[60] w-[min(19rem,calc(100vw-1.5rem))] origin-top-right overflow-hidden rounded-[22px] p-2 lg:hidden"
+              >
                 {navLinks.map((l, i) => (
                   <motion.button
                     key={l.id}
-                    initial={{ opacity: 0, x: -14 }}
+                    initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: i * 0.045 }}
+                    transition={{ delay: 0.04 + i * 0.035 }}
                     onClick={() => goto(l.to)}
-                    className="rounded-xl px-4 py-3 text-left font-medium text-ink transition-colors hover:bg-mint/60"
+                    className="w-full rounded-[14px] px-3.5 py-2.5 text-left text-[.95rem] font-medium text-ink transition-colors hover:bg-white/60 active:bg-mint/70"
                   >
                     {l.label}
                   </motion.button>
                 ))}
-                <div className="mt-2 grid grid-cols-2 gap-2 border-t border-line pt-3">
-                  <Link to={user ? '/account' : '/login'} className="btn btn-ghost text-sm">
-                    {user ? 'My account' : 'Sign in'}
+                <div className="mt-1.5 grid grid-cols-2 gap-2 border-t border-line/50 px-1 pb-1 pt-2.5">
+                  <Link to={user ? '/account' : '/login'} onClick={() => setMenuOpen(false)} className="btn btn-ghost justify-center text-[.82rem]">
+                    {user ? 'Account' : 'Sign in'}
                   </Link>
                   {isAdmin
-                    ? <Link to="/admin" className="btn btn-primary text-sm">Admin</Link>
-                    : <Link to="/shop" className="btn btn-primary text-sm">Shop all</Link>}
+                    ? <Link to="/admin" onClick={() => setMenuOpen(false)} className="btn btn-primary justify-center text-[.82rem]">Admin</Link>
+                    : <Link to="/shop" onClick={() => setMenuOpen(false)} className="btn btn-primary justify-center text-[.82rem]">Shop all</Link>}
                 </div>
-                <a href={`tel:${storeInfo.phone.replace(/\s/g, '')}`} className="mt-2 px-4 text-[.82rem] text-ink-3">
-                  Call the shop · {storeInfo.phone}
+                <a href={`tel:${(store.phone||'').replace(/\s/g, '')}`} className="mt-1 block px-3.5 pb-1 text-[.76rem] text-ink-3">
+                  Call the shop · {store.phone}
                 </a>
-              </div>
-            </motion.nav>
+              </motion.nav>
+            </>
           )}
         </AnimatePresence>
       </motion.header>

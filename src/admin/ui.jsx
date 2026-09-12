@@ -4,7 +4,7 @@ import { CloseIcon } from '../components/Icons'
 
 export function Panel({ children, className, title, action }) {
   return (
-    <section className={cn('rounded-[22px] border border-white/8 bg-white/[.035] p-5 backdrop-blur-sm', className)}>
+    <section className={cn('glass-admin rounded-[22px] p-5', className)}>
       {(title || action) && (
         <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
           {title && <h2 className="font-display text-[1.15rem] text-paper">{title}</h2>}
@@ -113,7 +113,7 @@ export function Modal({ open, onClose, title, children, wide }) {
           <motion.div className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
           <motion.div
-            className={cn('relative w-full rounded-[24px] border border-white/10 bg-[#12291f] p-5 shadow-2xl', wide ? 'max-w-2xl' : 'max-w-md')}
+            className={cn('glass-admin-modal relative w-full rounded-[24px] p-5 shadow-2xl', wide ? 'max-w-2xl' : 'max-w-md')}
             initial={{ opacity: 0, y: 24, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 16, scale: 0.98 }}
             transition={{ type: 'spring', stiffness: 300, damping: 26 }}
           >

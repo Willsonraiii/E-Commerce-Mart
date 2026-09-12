@@ -105,8 +105,37 @@ export function seed({ force = false } = {}) {
 
   db.prepare('INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)')
     .run('store', JSON.stringify({
-      name: 'Yalambar Store', tagline: 'Your Everyday Store.',
+      name: 'Yalambar Store',
+      tagline: 'Your Everyday Store.',
+      // contact — editable from the admin console
+      address: 'Shop 12, New Baneshwor Chowk, Kathmandu 44600',
+      phone: '+977 1-5901840',
+      email: 'hello@yalambermart.com.np',
+      // opening hours, per weekday. `closed` wins over the times.
+      hours: [
+        { day: 'Sunday',    open: '07:00', close: '21:00', closed: false },
+        { day: 'Monday',    open: '07:00', close: '21:00', closed: false },
+        { day: 'Tuesday',   open: '07:00', close: '21:00', closed: false },
+        { day: 'Wednesday', open: '07:00', close: '21:00', closed: false },
+        { day: 'Thursday',  open: '07:00', close: '21:00', closed: false },
+        { day: 'Friday',    open: '07:00', close: '21:00', closed: false },
+        { day: 'Saturday',  open: '08:00', close: '20:00', closed: false },
+      ],
+      // commerce
       deliveryFee: 60, freeDeliveryOver: 1500,
+      currencyPrefix: 'Rs.',
+      deliveryEta: '45–90 minutes',
+      deliveryArea: 'New Baneshwor',
+      // marketing strip + hero copy
+      announcements: [
+        'Free delivery on orders over Rs. 1,500',
+        'Produce cut and weighed this morning',
+      ],
+      heroTitle: 'Everything you need',
+      heroAccent: 'for a delicious meal',
+      heroSubtitle: 'Fresh produce, daily groceries and household essentials from the corner of New Baneshwor Chowk — delivered in as little as one hour.',
+      // social
+      facebook: '', instagram: '', whatsapp: '',
     }))
 
   return { products: products.length, categories: categoryMeta.length, offers: offerSeed.length }

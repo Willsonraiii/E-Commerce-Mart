@@ -4,6 +4,11 @@ export const cn = (...a) => clsx(...a)
 
 export const formatNPR = (n) => `Rs. ${Number(n || 0).toLocaleString('en-IN')}`
 
+/**
+ * Fallback store identity. The live values come from the admin console via
+ * `/api/meta` (see CatalogContext) — these are only used before that resolves
+ * or if the API is unreachable.
+ */
 export const storeInfo = {
   name: 'Yalambar Store',
   tagline: 'Your Everyday Store.',
@@ -11,9 +16,67 @@ export const storeInfo = {
   phone: '+977 1-5901840',
   email: 'hello@yalambermart.com.np',
   hours: [
-    { days: 'Sun – Fri', time: '7:00 AM – 9:00 PM' },
-    { days: 'Saturday', time: '8:00 AM – 8:00 PM' },
+    { day: 'Sunday', open: '07:00', close: '21:00', closed: false },
+    { day: 'Monday', open: '07:00', close: '21:00', closed: false },
+    { day: 'Tuesday', open: '07:00', close: '21:00', closed: false },
+    { day: 'Wednesday', open: '07:00', close: '21:00', closed: false },
+    { day: 'Thursday', open: '07:00', close: '21:00', closed: false },
+    { day: 'Friday', open: '07:00', close: '21:00', closed: false },
+    { day: 'Saturday', open: '08:00', close: '20:00', closed: false },
   ],
+  deliveryEta: '45–90 minutes',
+  deliveryArea: 'New Baneshwor',
+  announcements: [
+    'Free delivery on orders over Rs. 1,500',
+    'Produce cut and weighed this morning',
+  ],
+}
+
+export const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+
+/** "07:00" -> "7:00 AM" */
+export function to12h(hhmm) {
+  if (!hhmm) return ''
+  const [h, m] = String(hhmm).split(':').map(Number)
+  if (Number.isNaN(h)) return hhmm
+  const suffix = h >= 12 ? 'PM' : 'AM'
+  const hour = h % 12 === 0 ? 12 : h % 12
+  return `${hour}:${String(m ?? 0).padStart(2, '0')} ${suffix}`
+}
+
+/**
+ * Collapse a 7-day schedule into readable ranges, e.g.
+ *   [{days:'Sun – Fri', time:'7:00 AM – 9:00 PM'}, {days:'Saturday', time:'…'}]
+ * Consecutive days sharing the same hours are grouped.
+ */
+export function formatHours(hours) {
+  if (!Array.isArray(hours) || !hours.length) return []
+  const short = (d) => d.slice(0, 3)
+  const key = (h) => (h.closed ? 'closed' : `${h.open}-${h.close}`)
+  const out = []
+  let run = [hours[0]]
+  for (let i = 1; i <= hours.length; i += 1) {
+    if (i < hours.length && key(hours[i]) === key(run[0])) { run.push(hours[i]); continue }
+    const first = run[0], last = run[run.length - 1]
+    out.push({
+      days: run.length === 1 ? first.day : `${short(first.day)} – ${short(last.day)}`,
+      time: first.closed ? 'Closed' : `${to12h(first.open)} – ${to12h(first.close)}`,
+      closed: !!first.closed,
+    })
+    if (i < hours.length) run = [hours[i]]
+  }
+  return out
+}
+
+/** Is the shop open right now, per its schedule? */
+export function isOpenNow(hours, now = new Date()) {
+  if (!Array.isArray(hours) || !hours.length) return null
+  const today = hours[now.getDay()] || hours.find((h) => h.day === DAYS[now.getDay()])
+  if (!today || today.closed) return { open: false, today }
+  const [oh, om] = String(today.open).split(':').map(Number)
+  const [ch, cm] = String(today.close).split(':').map(Number)
+  const mins = now.getHours() * 60 + now.getMinutes()
+  return { open: mins >= oh * 60 + om && mins < ch * 60 + cm, today }
 }
 
 export const navLinks = [
