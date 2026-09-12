@@ -41,8 +41,8 @@ export default function OrdersPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="font-display text-[1.8rem] text-paper">Orders</h1>
-        <p className="mt-1 text-[.88rem] text-mint/50">Move an order along as you pack and dispatch it.</p>
+        <h1 className="font-display text-[1.8rem] text-gray-800">Orders</h1>
+        <p className="mt-1 text-[.88rem] text-gray-500">Move an order along as you pack and dispatch it.</p>
       </div>
 
       <div className="flex flex-wrap gap-2">
@@ -50,7 +50,7 @@ export default function OrdersPage() {
           <button
             key={f.id} onClick={() => setFilter(f.id)}
             className={cn('rounded-full border px-3.5 py-1.5 text-[.8rem] font-semibold transition-colors',
-              filter === f.id ? 'border-leaf-glow bg-leaf-glow text-forest' : 'border-white/12 bg-white/5 text-mint/70 hover:bg-white/10')}
+              filter === f.id ? 'border-brand-500 bg-brand-500 text-white' : 'border-gray-300 bg-gray-50 text-gray-600 hover:bg-gray-100')}
           >
             {f.label}
           </button>
@@ -63,8 +63,8 @@ export default function OrdersPage() {
           {items.map((o) => (
             <Fragment key={o.id}>
               <Tr>
-                <Td><span className="font-semibold text-paper">#{o.id}</span></Td>
-                <Td>{o.customer.name}<br /><span className="text-[.74rem] text-mint/40">{o.customer.phone}</span></Td>
+                <Td><span className="font-semibold text-gray-800">#{o.id}</span></Td>
+                <Td>{o.customer.name}<br /><span className="text-[.74rem] text-gray-400">{o.customer.phone}</span></Td>
                 <Td><span title={fullDate(o.createdAt)}>{relTime(o.createdAt)}</span></Td>
                 <Td>{o.totals.count}</Td>
                 <Td>
@@ -77,13 +77,13 @@ export default function OrdersPage() {
                       borderColor: `${STATUS_COLORS[o.status]}44`,
                     }}
                   >
-                    {FLOW.map((s) => <option key={s} value={s} className="bg-[#12291f] text-mint">{ORDER_STATUS[s].label}</option>)}
+                    {FLOW.map((s) => <option key={s} value={s} className="bg-[#12291f] text-gray-600">{ORDER_STATUS[s].label}</option>)}
                   </select>
                 </Td>
-                <Td className="font-semibold text-paper">{formatNPR(o.totals.total)}</Td>
+                <Td className="font-semibold text-gray-800">{formatNPR(o.totals.total)}</Td>
                 <Td>
                   <button onClick={() => setExpanded(expanded === o.id ? null : o.id)}
-                    className="inline-flex items-center gap-1 text-[.78rem] font-semibold text-leaf-glow hover:underline">
+                    className="inline-flex items-center gap-1 text-[.78rem] font-semibold text-brand-500 hover:underline">
                     {expanded === o.id ? 'Hide' : 'Details'}
                     <ArrowRight size={13} className={cn('transition-transform', expanded === o.id && 'rotate-90')} />
                   </button>
@@ -97,42 +97,42 @@ export default function OrdersPage() {
                         initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.28 }} className="overflow-hidden"
                       >
-                        <div className="grid gap-4 border-b border-white/8 bg-white/[.02] p-4 md:grid-cols-[1.4fr_1fr]">
+                        <div className="grid gap-4 border-b border-gray-200 bg-white/[.02] p-4 md:grid-cols-[1.4fr_1fr]">
                           <div>
-                            <p className="mb-2 text-[.72rem] font-bold uppercase tracking-wider text-mint/40">Items</p>
+                            <p className="mb-2 text-[.72rem] font-bold uppercase tracking-wider text-gray-400">Items</p>
                             <ul className="flex flex-col gap-2">
                               {o.items.map((i) => (
                                 <li key={i.id} className="flex items-center gap-2.5">
                                   <img src={i.image} alt="" className="h-9 w-9 rounded-lg object-cover" />
-                                  <span className="min-w-0 flex-1 truncate text-[.83rem] text-mint/85">{i.name}</span>
-                                  <span className="text-[.78rem] text-mint/50">{i.qty} × {formatNPR(i.price)}</span>
-                                  <span className="w-20 text-right text-[.83rem] font-semibold text-paper">{formatNPR(i.subtotal)}</span>
+                                  <span className="min-w-0 flex-1 truncate text-[.83rem] text-gray-700">{i.name}</span>
+                                  <span className="text-[.78rem] text-gray-500">{i.qty} × {formatNPR(i.price)}</span>
+                                  <span className="w-20 text-right text-[.83rem] font-semibold text-gray-800">{formatNPR(i.subtotal)}</span>
                                 </li>
                               ))}
                             </ul>
-                            <dl className="mt-3 flex flex-col gap-1 border-t border-white/8 pt-2.5 text-[.82rem]">
-                              <div className="flex justify-between"><dt className="text-mint/50">Subtotal</dt><dd className="text-mint/85">{formatNPR(o.totals.subtotal)}</dd></div>
-                              <div className="flex justify-between"><dt className="text-mint/50">Delivery</dt><dd className="text-mint/85">{o.totals.delivery === 0 ? 'Free' : formatNPR(o.totals.delivery)}</dd></div>
-                              <div className="flex justify-between font-semibold text-paper"><dt>Total</dt><dd>{formatNPR(o.totals.total)}</dd></div>
+                            <dl className="mt-3 flex flex-col gap-1 border-t border-gray-200 pt-2.5 text-[.82rem]">
+                              <div className="flex justify-between"><dt className="text-gray-500">Subtotal</dt><dd className="text-gray-700">{formatNPR(o.totals.subtotal)}</dd></div>
+                              <div className="flex justify-between"><dt className="text-gray-500">Delivery</dt><dd className="text-gray-700">{o.totals.delivery === 0 ? 'Free' : formatNPR(o.totals.delivery)}</dd></div>
+                              <div className="flex justify-between font-semibold text-gray-800"><dt>Total</dt><dd>{formatNPR(o.totals.total)}</dd></div>
                             </dl>
                           </div>
                           <div className="flex flex-col gap-3">
-                            <div className="rounded-xl border border-white/8 bg-white/[.03] p-3">
-                              <p className="mb-1.5 flex items-center gap-1.5 text-[.72rem] font-bold uppercase tracking-wider text-mint/40">
+                            <div className="rounded-xl border border-gray-200 bg-white/[.03] p-3">
+                              <p className="mb-1.5 flex items-center gap-1.5 text-[.72rem] font-bold uppercase tracking-wider text-gray-400">
                                 <PinIcon size={12} /> Deliver to
                               </p>
-                              <p className="text-[.85rem] font-semibold text-paper">{o.customer.name}</p>
-                              <p className="text-[.82rem] text-mint/70">{o.address.line}</p>
-                              <p className="text-[.82rem] text-mint/70">{[o.address.landmark, o.address.city].filter(Boolean).join(' · ')}</p>
-                              <a href={`tel:${o.customer.phone}`} className="mt-2 inline-flex items-center gap-1.5 text-[.8rem] font-semibold text-leaf-glow hover:underline">
+                              <p className="text-[.85rem] font-semibold text-gray-800">{o.customer.name}</p>
+                              <p className="text-[.82rem] text-gray-600">{o.address.line}</p>
+                              <p className="text-[.82rem] text-gray-600">{[o.address.landmark, o.address.city].filter(Boolean).join(' · ')}</p>
+                              <a href={`tel:${o.customer.phone}`} className="mt-2 inline-flex items-center gap-1.5 text-[.8rem] font-semibold text-brand-500 hover:underline">
                                 <PhoneIcon size={13} /> {o.customer.phone}
                               </a>
-                              {o.address.notes && <p className="mt-2 rounded-lg bg-white/6 p-2 text-[.78rem] italic text-mint/60">“{o.address.notes}”</p>}
+                              {o.address.notes && <p className="mt-2 rounded-lg bg-gray-50 p-2 text-[.78rem] italic text-gray-500">“{o.address.notes}”</p>}
                             </div>
-                            <div className="rounded-xl border border-white/8 bg-white/[.03] p-3 text-[.82rem]">
-                              <p className="text-mint/50">Payment: <b className="text-paper">{PAYMENTS.find((p) => p.id === o.paymentMethod)?.label || o.paymentMethod}</b></p>
-                              <p className="mt-1 text-mint/50">Placed: <span className="text-mint/80">{fullDate(o.createdAt)}</span></p>
-                              <p className="mt-1 text-mint/50">ETA: <span className="text-mint/80">{o.eta}</span></p>
+                            <div className="rounded-xl border border-gray-200 bg-white/[.03] p-3 text-[.82rem]">
+                              <p className="text-gray-500">Payment: <b className="text-gray-800">{PAYMENTS.find((p) => p.id === o.paymentMethod)?.label || o.paymentMethod}</b></p>
+                              <p className="mt-1 text-gray-500">Placed: <span className="text-gray-700">{fullDate(o.createdAt)}</span></p>
+                              <p className="mt-1 text-gray-500">ETA: <span className="text-gray-700">{o.eta}</span></p>
                             </div>
                             {o.status !== 'delivered' && o.status !== 'cancelled' && (
                               <AdminButton onClick={() => setStatus(o.id, FLOW[FLOW.indexOf(o.status) + 1])}>

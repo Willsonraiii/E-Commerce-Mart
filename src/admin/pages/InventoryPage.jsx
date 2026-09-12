@@ -37,8 +37,8 @@ export default function InventoryPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="font-display text-[1.8rem] text-paper">Inventory</h1>
-        <p className="mt-1 text-[.88rem] text-mint/50">Flip stock levels as the shelves empty and refill.</p>
+        <h1 className="font-display text-[1.8rem] text-gray-800">Inventory</h1>
+        <p className="mt-1 text-[.88rem] text-gray-500">Flip stock levels as the shelves empty and refill.</p>
       </div>
 
       <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
@@ -51,7 +51,7 @@ export default function InventoryPage() {
 
       <Panel>
         <div className="relative mb-4 max-w-sm">
-          <SearchIcon size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-mint/40" />
+          <SearchIcon size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a product…" className={`${adminField} pl-10`} />
         </div>
 
@@ -63,13 +63,13 @@ export default function InventoryPage() {
                 <span className="flex items-center gap-3">
                   <img src={p.image} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
                   <span className="min-w-0">
-                    <span className="block truncate font-semibold text-paper">{p.name}</span>
-                    <span className="block truncate text-[.74rem] text-mint/40">{p.brand} · {p.weight}</span>
+                    <span className="block truncate font-semibold text-gray-800">{p.name}</span>
+                    <span className="block truncate text-[.74rem] text-gray-400">{p.brand} · {p.weight}</span>
                   </span>
                 </span>
               </Td>
               <Td className="capitalize">{p.category}</Td>
-              <Td className="font-semibold text-paper">{formatNPR(p.price)}</Td>
+              <Td className="font-semibold text-gray-800">{formatNPR(p.price)}</Td>
               <Td>
                 <span className="inline-flex gap-1.5">
                   {LEVELS.map((l) => (

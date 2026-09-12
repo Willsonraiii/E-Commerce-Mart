@@ -22,8 +22,8 @@ export default function CustomersPage() {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h1 className="font-display text-[1.8rem] text-paper">Customers</h1>
-        <p className="mt-1 text-[.88rem] text-mint/50">Everyone with an account at the shop.</p>
+        <h1 className="font-display text-[1.8rem] text-gray-800">Customers</h1>
+        <p className="mt-1 text-[.88rem] text-gray-500">Everyone with an account at the shop.</p>
       </div>
 
       <div className="grid gap-3.5 sm:grid-cols-3">
@@ -34,7 +34,7 @@ export default function CustomersPage() {
 
       <Panel>
         <div className="relative mb-4 max-w-sm">
-          <SearchIcon size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-mint/40" />
+          <SearchIcon size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, email or phone…" className={`${adminField} pl-10`} />
         </div>
 
@@ -44,20 +44,20 @@ export default function CustomersPage() {
             <Tr key={u.id}>
               <Td>
                 <span className="flex items-center gap-2.5">
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-leaf-glow to-leaf-bright text-[.72rem] font-bold text-forest">
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand-500 text-[.72rem] font-bold text-white">
                     {initials(u.name)}
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate font-semibold text-paper">{u.name}</span>
+                    <span className="block truncate font-semibold text-gray-800">{u.name}</span>
                     {u.role === 'admin' && <Badge color="#f0b429" className="mt-0.5">Admin</Badge>}
                   </span>
                 </span>
               </Td>
-              <Td><span className="block truncate">{u.email}</span><span className="text-[.74rem] text-mint/40">{u.phone}</span></Td>
+              <Td><span className="block truncate">{u.email}</span><span className="text-[.74rem] text-gray-400">{u.phone}</span></Td>
               <Td>{u.city || '—'}</Td>
               <Td><Badge color={u.orders ? '#4fd18b' : '#7a7368'}>{u.orders}</Badge></Td>
-              <Td className="font-semibold text-paper">{formatNPR(u.spent)}</Td>
-              <Td className="text-[.8rem] text-mint/50">{relTime(u.createdAt)}</Td>
+              <Td className="font-semibold text-gray-800">{formatNPR(u.spent)}</Td>
+              <Td className="text-[.8rem] text-gray-500">{relTime(u.createdAt)}</Td>
             </Tr>
           ))}
         </Table>

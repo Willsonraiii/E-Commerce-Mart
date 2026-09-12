@@ -45,8 +45,8 @@ export default function CategoriesPage() {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[1.8rem] text-paper">Categories</h1>
-          <p className="mt-1 text-[.88rem] text-mint/50">The aisles customers browse on the homepage.</p>
+          <h1 className="font-display text-[1.8rem] text-gray-800">Categories</h1>
+          <p className="mt-1 text-[.88rem] text-gray-500">The aisles customers browse on the homepage.</p>
         </div>
         <AdminButton onClick={() => { setForm(EMPTY); setEditing(false); setOpen(true) }}>
           <PlusIcon size={16} /> New aisle
@@ -55,7 +55,7 @@ export default function CategoriesPage() {
 
       {loading ? (
         <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-28 animate-pulse rounded-[20px] bg-white/6" />)}
+          {Array.from({ length: 6 }).map((_, i) => <div key={i} className="h-28 animate-pulse rounded-[20px] bg-gray-50" />)}
         </div>
       ) : (
         <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -65,7 +65,7 @@ export default function CategoriesPage() {
               <motion.div
                 key={c.id}
                 initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * .04 }}
-                className="group relative overflow-hidden rounded-[20px] border border-white/8 p-4"
+                className="group relative overflow-hidden rounded-[20px] border border-gray-200 p-4"
                 style={{ background: `linear-gradient(150deg, ${t.from}22, ${t.to}33)` }}
               >
                 <span aria-hidden className="absolute -right-6 -top-6 h-20 w-20 rounded-full opacity-30 blur-xl" style={{ background: t.to }} />
@@ -77,17 +77,17 @@ export default function CategoriesPage() {
                     </span>
                     <span className="flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                       <button onClick={() => { setForm({ ...c }); setEditing(true); setOpen(true) }} aria-label="Edit"
-                        className="grid h-7 w-7 place-items-center rounded-lg border border-white/15 bg-black/20 text-mint hover:bg-black/40">
+                        className="grid h-7 w-7 place-items-center rounded-lg border border-white/70 bg-white/90 text-gray-700 shadow-ta backdrop-blur-sm hover:bg-white">
                         <EditIcon size={13} />
                       </button>
                       <button onClick={() => remove(c)} aria-label="Delete"
-                        className="grid h-7 w-7 place-items-center rounded-lg border border-white/15 bg-black/20 text-[#f0a58a] hover:bg-terracotta/40">
+                        className="grid h-7 w-7 place-items-center rounded-lg border border-gray-300 bg-white text-errorc-600 hover:bg-errorc-50 hover:border-errorc-300">
                         <TrashIcon size={13} />
                       </button>
                     </span>
                   </div>
-                  <p className="font-display text-[1.05rem] text-paper">{c.name}</p>
-                  <p className="text-[.76rem] text-mint/55">{c.blurb || c.id}</p>
+                  <p className="font-display text-[1.05rem] text-gray-800">{c.name}</p>
+                  <p className="text-[.76rem] text-gray-500">{c.blurb || c.id}</p>
                   <Badge color={t.from} className="mt-2">{c.count} products</Badge>
                 </div>
               </motion.div>
@@ -99,21 +99,21 @@ export default function CategoriesPage() {
       <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit aisle' : 'New aisle'}>
         <form onSubmit={save} className="flex flex-col gap-3.5">
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">Name *</span>
+            <span className="text-[.78rem] text-gray-500">Name *</span>
             <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={adminField} />
           </label>
           {!editing && (
             <label className="flex flex-col gap-1.5">
-              <span className="text-[.78rem] text-mint/60">ID (auto from name)</span>
+              <span className="text-[.78rem] text-gray-500">ID (auto from name)</span>
               <input value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} placeholder="frozen" className={adminField} />
             </label>
           )}
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">Tagline</span>
+            <span className="text-[.78rem] text-gray-500">Tagline</span>
             <input value={form.blurb} onChange={(e) => setForm({ ...form, blurb: e.target.value })} placeholder="Cut this morning" className={adminField} />
           </label>
           <div className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">Colour tone</span>
+            <span className="text-[.78rem] text-gray-500">Colour tone</span>
             <div className="flex flex-wrap gap-1.5">
               {Object.keys(TONES).map((k) => {
                 const t = TONES[k]

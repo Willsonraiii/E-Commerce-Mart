@@ -11,6 +11,21 @@ export default {
       // the utility entirely and inputs fall back to browser defaults.
       opacity: { 2: '0.02', 4: '0.04', 6: '0.06', 8: '0.08', 12: '0.12', 14: '0.14', 18: '0.18' },
       colors: {
+        /* TailAdmin admin-console palette (light theme).
+           Scoped to /admin — the storefront uses the forest brand below. */
+        brand: {
+          25: '#f2f7ff', 50: '#ecf3ff', 100: '#dde9ff', 200: '#c2d6ff', 300: '#9cb9ff',
+          400: '#7592ff', 500: '#465fff', 600: '#3641f5', 700: '#2a31d8',
+          800: '#252dae', 900: '#262e89', 950: '#161950',
+        },
+        gray: {
+          25: '#fcfcfd', 50: '#f9fafb', 100: '#f2f4f7', 200: '#e4e7ec', 300: '#d0d5dd',
+          400: '#98a2b3', 500: '#667085', 600: '#475467', 700: '#344054',
+          800: '#1d2939', 900: '#101828', 950: '#0c111d',
+        },
+        success: { 25: '#f6fef9', 50: '#ecfdf3', 100: '#d1fadf', 500: '#12b76a', 600: '#039855', 700: '#027a48' },
+        errorc:  { 25: '#fffbfa', 50: '#fef3f2', 100: '#fee4e2', 500: '#f04438', 600: '#d92d20', 700: '#b42318' },
+        warning: { 25: '#fffcf5', 50: '#fffaeb', 100: '#fef0c7', 500: '#f79009', 600: '#dc6803', 700: '#b54708' },
         forest: { DEFAULT: '#143528', mid: '#1c4634', deep: '#0b2118' },
         leaf: { DEFAULT: '#2f6b47', bright: '#3d8a58', glow: '#4fd18b' },
         mint: '#e5f3ea',
@@ -51,6 +66,9 @@ export default {
         'border-spin': { '100%': { transform: 'rotate(360deg)' } },
       },
       boxShadow: {
+        'ta': '0 1px 2px 0 rgba(16,24,40,0.05)',
+        'ta-md': '0 4px 8px -2px rgba(16,24,40,0.10), 0 2px 4px -2px rgba(16,24,40,0.06)',
+        'ta-lg': '0 12px 16px -4px rgba(16,24,40,0.08), 0 4px 6px -2px rgba(16,24,40,0.03)',
         premium: '0 24px 60px -28px rgba(20,53,40,.5)',
         lift: '0 34px 80px -32px rgba(20,53,40,.62)',
         glowleaf: '0 0 0 1px rgba(79,209,139,.28), 0 18px 50px -20px rgba(79,209,139,.45)',

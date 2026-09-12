@@ -48,6 +48,23 @@ router.get('/stats', (_req, res) => {
     return byDay.get(d) || { d, v: 0, n: 0 }
   })
 
+  // 12 months of revenue so the dashboard's bar chart has real history
+  // (the 14-day series above only covers the current fortnight).
+  const monthRows = db.prepare(`
+    SELECT strftime('%Y-%m', created_at) m, COALESCE(SUM(total),0) v, COUNT(*) n
+    FROM orders WHERE status != 'cancelled'
+      AND date(created_at) >= date('now','start of month','-11 months')
+    GROUP BY m`).all()
+  const byMonth = new Map(monthRows.map((r) => [r.m, r]))
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const dt = new Date()
+    dt.setDate(1)
+    dt.setMonth(dt.getMonth() - (11 - i))
+    const m = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`
+    const hit = byMonth.get(m)
+    return { m, label: dt.toLocaleString('en-US', { month: 'short' }), v: hit ? hit.v : 0, n: hit ? hit.n : 0 }
+  })
+
   const topProducts = db.prepare(`
     SELECT oi.product_id id, oi.name, SUM(oi.qty) units, SUM(oi.subtotal) revenue
     FROM order_items oi GROUP BY oi.product_id ORDER BY units DESC LIMIT 6`).all()
@@ -60,7 +77,7 @@ router.get('/stats', (_req, res) => {
     success: true,
     data: {
       totals: { revenue, orders, customers, products, aov: orders ? revenue / orders : 0 },
-      series, topProducts, byStatus, lowStock, recent,
+      series, months, topProducts, byStatus, lowStock, recent,
     },
   })
 })

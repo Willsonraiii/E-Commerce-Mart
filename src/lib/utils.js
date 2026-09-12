@@ -5,6 +5,18 @@ export const cn = (...a) => clsx(...a)
 export const formatNPR = (n) => `Rs. ${Number(n || 0).toLocaleString('en-IN')}`
 
 /**
+ * Short money for dashboard tiles: 1308 -> "Rs. 1,308", 20126.7 -> "Rs. 20.1K",
+ * 1250000 -> "Rs. 12.5L". Keeps stat strips on one line.
+ */
+export const formatNPRShort = (n) => {
+  const v = Math.round(Number(n) || 0)
+  if (Math.abs(v) >= 10000000) return `Rs. ${(v / 10000000).toFixed(1)}Cr`
+  if (Math.abs(v) >= 100000) return `Rs. ${(v / 100000).toFixed(1)}L`
+  if (Math.abs(v) >= 10000) return `Rs. ${(v / 1000).toFixed(1)}K`
+  return `Rs. ${v.toLocaleString('en-IN')}`
+}
+
+/**
  * Fallback store identity. The live values come from the admin console via
  * `/api/meta` (see CatalogContext) — these are only used before that resolves
  * or if the API is unreachable.

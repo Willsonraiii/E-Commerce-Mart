@@ -89,15 +89,15 @@ export default function ProductsPage() {
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[1.8rem] text-paper">Products</h1>
-          <p className="mt-1 text-[.88rem] text-mint/50">{items.length} items on the racks. Create, edit, archive.</p>
+          <h1 className="font-display text-[1.8rem] text-gray-800">Products</h1>
+          <p className="mt-1 text-[.88rem] text-gray-500">{items.length} items on the racks. Create, edit, archive.</p>
         </div>
         <AdminButton onClick={openNew}><PlusIcon size={16} /> New product</AdminButton>
       </div>
 
       <Panel>
         <div className="relative mb-4 max-w-sm">
-          <SearchIcon size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-mint/40" />
+          <SearchIcon size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, brand or ID…"
             className={`${adminField} pl-10`} />
         </div>
@@ -110,35 +110,35 @@ export default function ProductsPage() {
                 <span className="flex items-center gap-3">
                   <img src={p.image} alt="" className="h-10 w-10 shrink-0 rounded-lg object-cover" />
                   <span className="min-w-0">
-                    <span className="block truncate font-semibold text-paper">{p.name}</span>
-                    <span className="block truncate text-[.74rem] text-mint/40">{p.brand} · {p.weight}</span>
+                    <span className="block truncate font-semibold text-gray-800">{p.name}</span>
+                    <span className="block truncate text-[.74rem] text-gray-400">{p.brand} · {p.weight}</span>
                   </span>
                 </span>
               </Td>
               <Td className="capitalize">{p.category}</Td>
               <Td>
-                <span className="font-semibold text-paper">{formatNPR(p.price)}</span>
-                {p.originalPrice && <span className="ml-1.5 text-[.74rem] text-mint/35 line-through">{formatNPR(p.originalPrice)}</span>}
+                <span className="font-semibold text-gray-800">{formatNPR(p.price)}</span>
+                {p.originalPrice && <span className="ml-1.5 text-[.74rem] text-gray-400 line-through">{formatNPR(p.originalPrice)}</span>}
               </Td>
               <Td>
                 <Badge color={p.stock === 'in' ? '#4fd18b' : p.stock === 'low' ? '#f0b429' : '#e2795b'}>
                   {p.stockLabel}
                 </Badge>
               </Td>
-              <Td>{p.featured ? <CheckIcon size={16} className="text-leaf-glow" /> : <span className="text-mint/25">—</span>}</Td>
+              <Td>{p.featured ? <CheckIcon size={16} className="text-brand-500" /> : <span className="text-gray-300">—</span>}</Td>
               <Td>
                 <span className="flex justify-end gap-1.5">
                   <button onClick={() => openEdit(p)} aria-label="Edit"
-                    className="grid h-8 w-8 place-items-center rounded-lg border border-white/12 text-mint/70 transition-colors hover:bg-white/10 hover:text-paper">
+                    className="grid h-8 w-8 place-items-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800">
                     <EditIcon size={15} />
                   </button>
                   {p.archived ? (
-                    <button onClick={() => restore(p)} className="rounded-lg border border-leaf-glow/30 px-2.5 text-[.74rem] font-semibold text-leaf-glow">
+                    <button onClick={() => restore(p)} className="rounded-lg border border-brand-200 bg-brand-50 px-2.5 text-[.74rem] font-semibold text-brand-600">
                       Restore
                     </button>
                   ) : (
                     <button onClick={() => archive(p)} aria-label="Archive"
-                      className="grid h-8 w-8 place-items-center rounded-lg border border-white/12 text-mint/70 transition-colors hover:bg-terracotta/25 hover:text-[#f0a58a]">
+                      className="grid h-8 w-8 place-items-center rounded-lg border border-gray-300 text-gray-600 transition-colors hover:border-errorc-300 hover:bg-errorc-50 hover:text-errorc-600">
                       <TrashIcon size={15} />
                     </button>
                   )}
@@ -152,46 +152,46 @@ export default function ProductsPage() {
       <Modal open={open} onClose={() => setOpen(false)} title={editing ? 'Edit product' : 'New product'} wide>
         <form onSubmit={save} className="grid gap-3.5 sm:grid-cols-2">
           <label className="flex flex-col gap-1.5 sm:col-span-2">
-            <span className="text-[.78rem] text-mint/60">Name *</span>
+            <span className="text-[.78rem] text-gray-500">Name *</span>
             <input required name="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={adminField} />
           </label>
 
           {!editing && (
             <label className="flex flex-col gap-1.5">
-              <span className="text-[.78rem] text-mint/60">ID (auto from name)</span>
+              <span className="text-[.78rem] text-gray-500">ID (auto from name)</span>
               <input name="id" value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} placeholder="wai-wai" className={adminField} />
             </label>
           )}
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">Brand</span>
+            <span className="text-[.78rem] text-gray-500">Brand</span>
             <input name="brand" value={form.brand} onChange={(e) => setForm({ ...form, brand: e.target.value })} className={adminField} />
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">Aisle</span>
+            <span className="text-[.78rem] text-gray-500">Aisle</span>
             <select name="category" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} className={adminField}>
               {categories.map((c) => <option key={c.id} value={c.id} className="bg-[#12291f]">{c.name}</option>)}
             </select>
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">Weight / size</span>
+            <span className="text-[.78rem] text-gray-500">Weight / size</span>
             <input name="weight" value={form.weight} onChange={(e) => setForm({ ...form, weight: e.target.value })} placeholder="1 kg" className={adminField} />
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">Price (Rs.) *</span>
+            <span className="text-[.78rem] text-gray-500">Price (Rs.) *</span>
             <input required type="number" step="0.01" name="price" value={form.price} onChange={(e) => setForm({ ...form, price: e.target.value })} className={adminField} />
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">Original price (for discount)</span>
+            <span className="text-[.78rem] text-gray-500">Original price (for discount)</span>
             <input type="number" step="0.01" name="originalPrice" value={form.originalPrice} onChange={(e) => setForm({ ...form, originalPrice: e.target.value })} className={adminField} />
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">Stock</span>
+            <span className="text-[.78rem] text-gray-500">Stock</span>
             <select name="stock" value={form.stock} onChange={(e) => setForm({ ...form, stock: e.target.value })} className={adminField}>
               <option value="in" className="bg-[#12291f]">In stock</option>
               <option value="low" className="bg-[#12291f]">Low stock</option>
@@ -200,20 +200,20 @@ export default function ProductsPage() {
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">Popularity (0–100)</span>
+            <span className="text-[.78rem] text-gray-500">Popularity (0–100)</span>
             <input type="number" min="0" max="100" name="popular" value={form.popular} onChange={(e) => setForm({ ...form, popular: e.target.value })} className={adminField} />
           </label>
 
           <label className="flex flex-col gap-1.5 sm:col-span-2">
-            <span className="text-[.78rem] text-mint/60">Description</span>
+            <span className="text-[.78rem] text-gray-500">Description</span>
             <textarea rows={2} name="description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className={`${adminField} resize-none`} />
           </label>
 
           <label className="flex flex-col gap-1.5 sm:col-span-2">
-            <span className="text-[.78rem] text-mint/60">Image path</span>
+            <span className="text-[.78rem] text-gray-500">Image path</span>
             <span className="flex gap-2">
               <input name="image" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} placeholder="/images/apple.jpg" className={adminField} />
-              <label className="grid w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-white/12 bg-white/6 text-mint transition-colors hover:bg-white/12">
+              <label className="grid w-11 shrink-0 cursor-pointer place-items-center rounded-xl border border-gray-300 bg-gray-50 text-gray-600 transition-colors hover:bg-gray-100">
                 <UploadIcon size={17} />
                 <input type="file" accept="image/*" hidden onChange={(e) => upload(e.target.files?.[0])} />
               </label>
@@ -222,30 +222,30 @@ export default function ProductsPage() {
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">3D model shape</span>
+            <span className="text-[.78rem] text-gray-500">3D model shape</span>
             <select name="model" value={form.model} onChange={(e) => setForm({ ...form, model: e.target.value })} className={adminField}>
               {MODELS.map((m) => <option key={m} value={m} className="bg-[#12291f]">{m || 'card (default)'}</option>)}
             </select>
           </label>
 
           <label className="flex flex-col gap-1.5">
-            <span className="text-[.78rem] text-mint/60">3D colour</span>
+            <span className="text-[.78rem] text-gray-500">3D colour</span>
             <span className="flex gap-2">
               <input type="color" value={form.modelColor} onChange={(e) => setForm({ ...form, modelColor: e.target.value })}
-                className="h-[42px] w-14 shrink-0 cursor-pointer rounded-xl border border-white/12 bg-white/6" />
+                className="h-[42px] w-14 shrink-0 cursor-pointer rounded-xl border border-gray-300 bg-gray-50" />
               <input value={form.modelColor} onChange={(e) => setForm({ ...form, modelColor: e.target.value })} className={adminField} />
             </span>
           </label>
 
           <label className="flex flex-col gap-1.5 sm:col-span-2">
-            <span className="text-[.78rem] text-mint/60">Search keywords (comma separated)</span>
+            <span className="text-[.78rem] text-gray-500">Search keywords (comma separated)</span>
             <input value={form.keywords} onChange={(e) => setForm({ ...form, keywords: e.target.value })} placeholder="noodles, instant, snack" className={adminField} />
           </label>
 
-          <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3 sm:col-span-2">
+          <label className="flex cursor-pointer items-center gap-2.5 rounded-xl border border-gray-200 bg-gray-50 p-3 sm:col-span-2">
             <input type="checkbox" checked={!!form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })}
               className="h-4 w-4 accent-[#4fd18b]" />
-            <span className="text-[.85rem] text-mint">Show in the Featured section on the homepage</span>
+            <span className="text-[.85rem] text-gray-600">Show in the Featured section on the homepage</span>
           </label>
 
           <div className="flex gap-2 sm:col-span-2">
