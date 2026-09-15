@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { db, mapProduct } from '../db.js'
+import { sql, mapProduct } from '../db.js'
 
 const router = Router()
 const PAGE_SIZE = 12
@@ -27,45 +27,61 @@ const BASE = `
     (SELECT ROUND(AVG(rating),1) FROM reviews r WHERE r.product_id = p.id) AS rating,
     (SELECT COUNT(*) FROM reviews r WHERE r.product_id = p.id) AS review_count
   FROM products p LEFT JOIN categories c ON c.id = p.category_id
-  WHERE p.archived = 0`
+  WHERE p.archived = false`
 
-router.get('/products', (req, res) => {
+router.get('/products', async (req, res) => {
   const {
     q = '', category = '', sort = 'popular', minPrice, maxPrice,
     availability = 'all', discounted, featured, page = 1, pageSize = PAGE_SIZE, limit,
   } = req.query
 
+  // Postgres needs numbered $1,$2... placeholders instead of SQLite's `?`,
+  // and the number of filters varies per request — so this builds the WHERE
+  // clause and its matching args array in lockstep, same shape as before,
+  // then runs it with sql.unsafe (safe here: values are still bound
+  // parameters, never string-concatenated into the query text).
   const where = []
   const args = []
+  const bind = (v) => { args.push(v); return `$${args.length}` }
 
-  if (category) { where.push('p.category_id = ?'); args.push(category) }
-  if (featured === '1' || featured === 'true') where.push('p.featured = 1')
+  if (category) where.push(`p.category_id = ${bind(category)}`)
+  if (featured === '1' || featured === 'true') where.push('p.featured = true')
   if (discounted === '1' || discounted === 'true') where.push('p.discount > 0')
-  if (minPrice) { where.push('p.price >= ?'); args.push(Number(minPrice)) }
-  if (maxPrice) { where.push('p.price <= ?'); args.push(Number(maxPrice)) }
+  if (minPrice) where.push(`p.price >= ${bind(Number(minPrice))}`)
+  if (maxPrice) where.push(`p.price <= ${bind(Number(maxPrice))}`)
   if (availability === 'in') where.push("p.stock = 'in'")
   if (availability === 'low') where.push("p.stock = 'low'")
   if (availability === 'available') where.push("p.stock != 'out'")
 
   const tokens = String(q).trim().toLowerCase().split(/\s+/).filter(Boolean)
   for (const t of tokens) {
-    where.push(`(lower(p.name) LIKE ? OR lower(p.brand) LIKE ? OR lower(p.keywords) LIKE ?
-      OR lower(p.description) LIKE ? OR lower(p.note) LIKE ? OR lower(COALESCE(c.name,'')) LIKE ?
-      OR lower(p.category_id) LIKE ? OR lower(p.weight) LIKE ?)`)
-    args.push(...Array(8).fill(`%${t}%`))
+    const like = `%${t}%`
+    const cols = [
+      'lower(p.name)', 'lower(p.brand)', 'lower(p.keywords)', 'lower(p.description)',
+      'lower(p.note)', "lower(COALESCE(c.name,''))", 'lower(p.category_id)', 'lower(p.weight)',
+    ]
+    where.push(`(${cols.map((c) => `${c} LIKE ${bind(like)}`).join(' OR ')})`)
   }
 
   const clause = where.length ? ` AND ${where.join(' AND ')}` : ''
-  const total = db.prepare(
-    `SELECT COUNT(*) c FROM products p LEFT JOIN categories c ON c.id = p.category_id
-     WHERE p.archived = 0${clause}`,
-  ).get(...args).c
+
+  // Snapshot the filter args before adding LIMIT/OFFSET below — the count
+  // query only needs the WHERE clause's placeholders.
+  const filterArgs = [...args]
+  const [{ c: total }] = await sql.unsafe(
+    `SELECT COUNT(*)::int c FROM products p LEFT JOIN categories c ON c.id = p.category_id
+     WHERE p.archived = false${clause}`,
+    filterArgs,
+  )
 
   const size = Math.max(1, Number(limit || pageSize) || PAGE_SIZE)
   const safePage = Math.max(1, Number(page) || 1)
-  const rows = db.prepare(
-    `${BASE}${clause} ORDER BY ${ORDER_BY[sort] || ORDER_BY.popular} LIMIT ? OFFSET ?`,
-  ).all(...args, size, (safePage - 1) * size)
+  const limitPh = bind(size)
+  const offsetPh = bind((safePage - 1) * size)
+  const rows = await sql.unsafe(
+    `${BASE}${clause} ORDER BY ${ORDER_BY[sort] || ORDER_BY.popular} LIMIT ${limitPh} OFFSET ${offsetPh}`,
+    args,
+  )
 
   res.json({
     success: true,
@@ -78,28 +94,31 @@ router.get('/products', (req, res) => {
   })
 })
 
-router.get('/products/:id', (req, res) => {
-  const row = db.prepare(`${BASE} AND p.id = ?`).get(req.params.id)
+router.get('/products/:id', async (req, res) => {
+  const [row] = await sql.unsafe(`${BASE} AND p.id = $1`, [req.params.id])
   if (!row) return res.status(404).json({ success: false, error: { message: 'Product not found.' } })
   const product = mapProduct(row)
-  const related = db.prepare(
-    `${BASE} AND p.category_id = ? AND p.id != ? ORDER BY p.popular DESC LIMIT 4`,
-  ).all(row.category_id, row.id).map(mapProduct)
-  const reviews = db.prepare(
-    'SELECT id,author,rating,body,created_at AS createdAt FROM reviews WHERE product_id = ? ORDER BY created_at DESC',
-  ).all(row.id)
+  const related = (await sql.unsafe(
+    `${BASE} AND p.category_id = $1 AND p.id != $2 ORDER BY p.popular DESC LIMIT 4`,
+    [row.category_id, row.id],
+  )).map(mapProduct)
+  const reviews = await sql`
+    SELECT id, author, rating, body, created_at AS "createdAt"
+    FROM reviews WHERE product_id = ${row.id} ORDER BY created_at DESC
+  `
   res.json({ success: true, data: { product, related, reviews } })
 })
 
-router.get('/categories', (_req, res) => {
-  const rows = db.prepare(`
-    SELECT c.*, (SELECT COUNT(*) FROM products p WHERE p.category_id = c.id AND p.archived = 0) AS count
-    FROM categories c ORDER BY c.sort_order ASC`).all()
+router.get('/categories', async (_req, res) => {
+  const rows = await sql`
+    SELECT c.*, (SELECT COUNT(*)::int FROM products p WHERE p.category_id = c.id AND p.archived = false) AS count
+    FROM categories c ORDER BY c.sort_order ASC
+  `
   res.json({ success: true, data: { items: rows } })
 })
 
-router.get('/offers', (_req, res) => {
-  const rows = db.prepare('SELECT * FROM offers ORDER BY sort_order ASC').all()
+router.get('/offers', async (_req, res) => {
+  const rows = await sql`SELECT * FROM offers ORDER BY sort_order ASC`
   res.json({
     success: true,
     data: {
@@ -111,9 +130,9 @@ router.get('/offers', (_req, res) => {
   })
 })
 
-router.get('/meta', (_req, res) => {
-  const b = db.prepare('SELECT MIN(price) mn, MAX(price) mx FROM products WHERE archived = 0').get()
-  const store = db.prepare("SELECT value FROM settings WHERE key = 'store'").get()
+router.get('/meta', async (_req, res) => {
+  const [b] = await sql`SELECT MIN(price)::float8 AS mn, MAX(price)::float8 AS mx FROM products WHERE archived = false`
+  const [store] = await sql`SELECT value FROM settings WHERE key = 'store'`
   res.json({
     success: true,
     data: {
@@ -124,16 +143,19 @@ router.get('/meta', (_req, res) => {
   })
 })
 
-router.post('/products/:id/reviews', (req, res) => {
+router.post('/products/:id/reviews', async (req, res) => {
   const { author = 'Anonymous', rating = 5, body = '' } = req.body || {}
-  const exists = db.prepare('SELECT id FROM products WHERE id = ?').get(req.params.id)
+  const [exists] = await sql`SELECT id FROM products WHERE id = ${req.params.id}`
   if (!exists) return res.status(404).json({ success: false, error: { message: 'Product not found.' } })
   const r = Math.min(5, Math.max(1, Number(rating) || 5))
-  db.prepare('INSERT INTO reviews (product_id,user_id,author,rating,body) VALUES (?,?,?,?,?)')
-    .run(req.params.id, req.user?.id || null, req.user?.name || author, r, String(body).slice(0, 600))
-  const reviews = db.prepare(
-    'SELECT id,author,rating,body,created_at AS createdAt FROM reviews WHERE product_id = ? ORDER BY created_at DESC',
-  ).all(req.params.id)
+  await sql`
+    INSERT INTO reviews (product_id, user_id, author, rating, body)
+    VALUES (${req.params.id}, ${req.user?.id || null}, ${req.user?.name || author}, ${r}, ${String(body).slice(0, 600)})
+  `
+  const reviews = await sql`
+    SELECT id, author, rating, body, created_at AS "createdAt"
+    FROM reviews WHERE product_id = ${req.params.id} ORDER BY created_at DESC
+  `
   res.status(201).json({ success: true, data: { reviews } })
 })
 

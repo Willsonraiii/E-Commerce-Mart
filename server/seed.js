@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs'
 import crypto from 'node:crypto'
-import { db } from './db.js'
+import { sql } from './db.js'
 import { products } from './seed-products.js'
 
 export const categoryMeta = [
@@ -49,94 +49,124 @@ const REVIEW_SEED = [
 
 const now = () => new Date().toISOString()
 
-export function seed({ force = false } = {}) {
-  const count = db.prepare('SELECT COUNT(*) c FROM products').get().c
-  if (count > 0 && !force) return { skipped: true }
+export async function seed({ force = false } = {}) {
+  const [{ c }] = await sql`select count(*)::int as c from products`
+  if (c > 0 && !force) return { skipped: true }
 
-  const insCat = db.prepare(
-    'INSERT OR REPLACE INTO categories (id,name,tone,blurb,sort_order) VALUES (?,?,?,?,?)',
-  )
-  categoryMeta.forEach((c, i) => insCat.run(c.id, c.name, c.tone, c.blurb, i))
+  for (const [i, cat] of categoryMeta.entries()) {
+    await sql`
+      insert into categories (id, name, tone, blurb, sort_order)
+      values (${cat.id}, ${cat.name}, ${cat.tone}, ${cat.blurb}, ${i})
+      on conflict (id) do update set
+        name = excluded.name, tone = excluded.tone,
+        blurb = excluded.blurb, sort_order = excluded.sort_order
+    `
+  }
 
-  const insProd = db.prepare(`INSERT OR REPLACE INTO products
-    (id,name,brand,category_id,description,price,original_price,discount,stock,weight,image,
-     featured,created_at,popular,keywords,model,model_color,note,archived)
-    VALUES (@id,@name,@brand,@category,@description,@price,@originalPrice,@discount,@stock,@weight,@image,
-     @featured,@createdAt,@popular,@keywords,@model,@modelColor,@note,0)`)
-
-  const tx = db.transaction((list) => {
-    for (const p of list) {
-      insProd.run({
-        ...p,
-        featured: p.featured ? 1 : 0,
-        keywords: (p.keywords || []).join(','),
-        originalPrice: p.originalPrice ?? null,
-        model: p.model ?? null,
-        note: p.note || '',
-        description: p.description || '',
-      })
+  // Mirrors the old `INSERT OR REPLACE` (full-row replace) semantics,
+  // wrapped in one transaction like the old db.transaction() did.
+  await sql.begin(async (tx) => {
+    for (const p of products) {
+      await tx`
+        insert into products
+          (id, name, brand, category_id, description, price, original_price, discount,
+           stock, weight, image, featured, created_at, popular, keywords, model,
+           model_color, note, archived)
+        values
+          (${p.id}, ${p.name}, ${p.brand}, ${p.category}, ${p.description || ''},
+           ${p.price}, ${p.originalPrice ?? null}, ${p.discount}, ${p.stock}, ${p.weight},
+           ${p.image}, ${!!p.featured}, ${p.createdAt}, ${p.popular},
+           ${(p.keywords || []).join(',')}, ${p.model ?? null}, ${p.modelColor},
+           ${p.note || ''}, false)
+        on conflict (id) do update set
+          name = excluded.name, brand = excluded.brand, category_id = excluded.category_id,
+          description = excluded.description, price = excluded.price,
+          original_price = excluded.original_price, discount = excluded.discount,
+          stock = excluded.stock, weight = excluded.weight, image = excluded.image,
+          featured = excluded.featured, created_at = excluded.created_at,
+          popular = excluded.popular, keywords = excluded.keywords, model = excluded.model,
+          model_color = excluded.model_color, note = excluded.note, archived = excluded.archived
+      `
     }
   })
-  tx(products)
 
-  const insOffer = db.prepare(`INSERT OR REPLACE INTO offers
-    (id,kicker,title,tag,detail,cta,to_path,theme,sort_order) VALUES (?,?,?,?,?,?,?,?,?)`)
-  offerSeed.forEach((o, i) =>
-    insOffer.run(o.id, o.kicker, o.title, o.tag, o.detail, o.cta, o.to_path, o.theme, i))
+  for (const [i, o] of offerSeed.entries()) {
+    await sql`
+      insert into offers (id, kicker, title, tag, detail, cta, to_path, theme, sort_order)
+      values (${o.id}, ${o.kicker}, ${o.title}, ${o.tag}, ${o.detail}, ${o.cta}, ${o.to_path}, ${o.theme}, ${i})
+      on conflict (id) do update set
+        kicker = excluded.kicker, title = excluded.title, tag = excluded.tag,
+        detail = excluded.detail, cta = excluded.cta, to_path = excluded.to_path,
+        theme = excluded.theme, sort_order = excluded.sort_order
+    `
+  }
 
-  const insRev = db.prepare(
-    'INSERT INTO reviews (product_id,author,rating,body,created_at) VALUES (?,?,?,?,?)',
-  )
-  db.prepare('DELETE FROM reviews WHERE user_id IS NULL').run()
-  REVIEW_SEED.forEach(([pid, author, rating, body]) => {
-    try { insRev.run(pid, author, rating, body, now()) } catch { /* product missing */ }
-  })
+  await sql`delete from reviews where user_id is null`
+  for (const [pid, author, rating, body] of REVIEW_SEED) {
+    try {
+      await sql`
+        insert into reviews (product_id, author, rating, body, created_at)
+        values (${pid}, ${author}, ${rating}, ${body}, ${now()})
+      `
+    } catch {
+      /* product missing — skip, same as the old try/catch */
+    }
+  }
 
-  // Admin + demo customer
+  // Admin + demo customer. Keyed off the UNIQUE email column (not id, which
+  // is a fresh random UUID every run) — same effect as the old
+  // `INSERT OR IGNORE`: existing accounts are left untouched on re-seed.
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@yalambermart.com.np'
   const adminPass = process.env.ADMIN_PASSWORD || 'admin123'
-  const insUser = db.prepare(`INSERT OR IGNORE INTO users
-    (id,name,phone,email,password_hash,role,address,city,landmark,created_at)
-    VALUES (?,?,?,?,?,?,?,?,?,?)`)
-  insUser.run(crypto.randomUUID(), 'Store Admin', '+977 1-5901840', adminEmail,
-    bcrypt.hashSync(adminPass, 10), 'admin', 'Shop 12, New Baneshwor Chowk', 'Kathmandu', 'Near Chowk', now())
-  insUser.run(crypto.randomUUID(), 'Sita Gurung', '+977 9801234567', 'demo@yalambermart.com.np',
-    bcrypt.hashSync('demo1234', 10), 'customer', 'Sankhamul Road, Flat 4B', 'New Baneshwor', 'Behind the school', now())
 
-  db.prepare('INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)')
-    .run('store', JSON.stringify({
-      name: 'Yalambar Store',
-      tagline: 'Your Everyday Store.',
-      // contact — editable from the admin console
-      address: 'Shop 12, New Baneshwor Chowk, Kathmandu 44600',
-      phone: '+977 1-5901840',
-      email: 'hello@yalambermart.com.np',
-      // opening hours, per weekday. `closed` wins over the times.
-      hours: [
-        { day: 'Sunday',    open: '07:00', close: '21:00', closed: false },
-        { day: 'Monday',    open: '07:00', close: '21:00', closed: false },
-        { day: 'Tuesday',   open: '07:00', close: '21:00', closed: false },
-        { day: 'Wednesday', open: '07:00', close: '21:00', closed: false },
-        { day: 'Thursday',  open: '07:00', close: '21:00', closed: false },
-        { day: 'Friday',    open: '07:00', close: '21:00', closed: false },
-        { day: 'Saturday',  open: '08:00', close: '20:00', closed: false },
-      ],
-      // commerce
-      deliveryFee: 60, freeDeliveryOver: 1500,
-      currencyPrefix: 'Rs.',
-      deliveryEta: '45–90 minutes',
-      deliveryArea: 'New Baneshwor',
-      // marketing strip + hero copy
-      announcements: [
-        'Free delivery on orders over Rs. 1,500',
-        'Produce cut and weighed this morning',
-      ],
-      heroTitle: 'Everything you need',
-      heroAccent: 'for a delicious meal',
-      heroSubtitle: 'Fresh produce, daily groceries and household essentials from the corner of New Baneshwor Chowk — delivered in as little as one hour.',
-      // social
-      facebook: '', instagram: '', whatsapp: '',
-    }))
+  await sql`
+    insert into users (id, name, phone, email, password_hash, role, address, city, landmark, created_at)
+    values (${crypto.randomUUID()}, 'Store Admin', '+977 1-5901840', ${adminEmail},
+            ${bcrypt.hashSync(adminPass, 10)}, 'admin', 'Shop 12, New Baneshwor Chowk',
+            'Kathmandu', 'Near Chowk', ${now()})
+    on conflict (email) do nothing
+  `
+  await sql`
+    insert into users (id, name, phone, email, password_hash, role, address, city, landmark, created_at)
+    values (${crypto.randomUUID()}, 'Sita Gurung', '+977 9801234567', 'demo@yalambermart.com.np',
+            ${bcrypt.hashSync('demo1234', 10)}, 'customer', 'Sankhamul Road, Flat 4B',
+            'New Baneshwor', 'Behind the school', ${now()})
+    on conflict (email) do nothing
+  `
+
+  const storeSettings = JSON.stringify({
+    name: 'Yalambar Store',
+    tagline: 'Your Everyday Store.',
+    address: 'Shop 12, New Baneshwor Chowk, Kathmandu 44600',
+    phone: '+977 1-5901840',
+    email: 'hello@yalambermart.com.np',
+    hours: [
+      { day: 'Sunday', open: '07:00', close: '21:00', closed: false },
+      { day: 'Monday', open: '07:00', close: '21:00', closed: false },
+      { day: 'Tuesday', open: '07:00', close: '21:00', closed: false },
+      { day: 'Wednesday', open: '07:00', close: '21:00', closed: false },
+      { day: 'Thursday', open: '07:00', close: '21:00', closed: false },
+      { day: 'Friday', open: '07:00', close: '21:00', closed: false },
+      { day: 'Saturday', open: '08:00', close: '20:00', closed: false },
+    ],
+    deliveryFee: 60, freeDeliveryOver: 1500,
+    currencyPrefix: 'Rs.',
+    deliveryEta: '45–90 minutes',
+    deliveryArea: 'New Baneshwor',
+    announcements: [
+      'Free delivery on orders over Rs. 1,500',
+      'Produce cut and weighed this morning',
+    ],
+    heroTitle: 'Everything you need',
+    heroAccent: 'for a delicious meal',
+    heroSubtitle: 'Fresh produce, daily groceries and household essentials from the corner of New Baneshwor Chowk — delivered in as little as one hour.',
+    facebook: '', instagram: '', whatsapp: '',
+  })
+
+  await sql`
+    insert into settings (key, value) values ('store', ${storeSettings})
+    on conflict (key) do update set value = excluded.value
+  `
 
   return { products: products.length, categories: categoryMeta.length, offers: offerSeed.length }
 }
@@ -146,15 +176,17 @@ if (process.argv[1] && process.argv[1].endsWith('seed.js')) {
   // Re-seeding rewrites the catalogue, so it must be asked for explicitly:
   //   npm run seed -- --force
   const force = process.argv.includes('--force')
-  const existing = db.prepare('SELECT COUNT(*) c FROM products').get().c
+  const [{ c: existing }] = await sql`select count(*)::int as c from products`
 
   if (existing > 0 && !force) {
     console.log(`[seed] ${existing} products already present — nothing to do.`)
     console.log('[seed] To wipe and re-seed the catalogue: npm run seed -- --force')
-    console.log('[seed] (take a snapshot first: npm run backup)')
   } else {
-    if (force && existing > 0) console.log(`[seed] --force: rewriting catalogue over ${existing} existing products…`)
-    const r = seed({ force })
+    if (force && existing > 0) {
+      console.log(`[seed] --force: rewriting catalogue over ${existing} existing products…`)
+    }
+    const r = await seed({ force })
     console.log('[seed] done:', r.skipped ? 'skipped' : `${r.products} products, ${r.categories} categories, ${r.offers} offers`)
   }
+  await sql.end()
 }

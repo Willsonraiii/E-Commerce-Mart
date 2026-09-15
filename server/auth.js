@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken'
-import { db, publicUser } from './db.js'
+import { sql, publicUser } from './db.js'
 
 import { JWT_SECRET as SECRET, COOKIE_NAME } from './config.js'
 
@@ -50,12 +50,12 @@ function readToken(req) {
   return req.cookies?.[COOKIE] || null
 }
 
-export function optionalAuth(req, _res, next) {
+export async function optionalAuth(req, _res, next) {
   try {
     const token = readToken(req)
     if (!token) { req.user = null; return next() }
     const payload = jwt.verify(token, SECRET)
-    const row = db.prepare('SELECT * FROM users WHERE id = ?').get(payload.sub)
+    const [row] = await sql`select * from users where id = ${payload.sub}`
     req.user = row ? publicUser(row) : null
   } catch {
     req.user = null
