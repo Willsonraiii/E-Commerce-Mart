@@ -1,19 +1,19 @@
+import 'dotenv/config'
 import postgres from 'postgres'
 
 const connectionString = process.env.DATABASE_URL
 
 if (!connectionString) {
   throw new Error(
-    'DATABASE_URL is not set. In Supabase: Project Settings -> Database -> ' +
-    'Connection string -> "Transaction pooler" (port 6543). Put it in .env ' +
-    'locally and in the Vercel dashboard for production.',
+    'DATABASE_URL is not set. In Supabase: click Connect -> Session pooler ' +
+    '(port 5432). Put it in .env locally and in the Vercel dashboard for production.',
   )
 }
 
-// `prepare: false` is required for Supabase's pooled connection — PgBouncer
-// in transaction mode doesn't support prepared statements. It's also what
-// you want for serverless in general: every Vercel invocation may land on a
-// different connection anyway, so there's nothing to gain from preparing.
+// `prepare: false` isn't strictly required on the Session pooler (unlike
+// Transaction mode, it does support prepared statements), but it's harmless
+// to leave off here — every Vercel invocation may land on a different
+// connection anyway, so there's nothing to gain from preparing.
 export const sql = postgres(connectionString, {
   ssl: 'require',
   prepare: false,

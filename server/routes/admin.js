@@ -8,8 +8,19 @@ import { requireAdmin } from '../auth.js'
 // `public/uploads/` folder doesn't survive a Vercel deploy (or even a
 // restart on some hosts). Create a public bucket in the Supabase dashboard
 // (Storage -> New bucket) and set its name below via env if it isn't
-// "product-images".
-const supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+// "product-images". The client is created lazily so the server can boot
+// fine without SUPABASE_URL/SUPABASE_SERVICE_ROLE_KEY set — it only errors
+// if the /uploads route is actually used without them configured.
+let supabaseAdmin = null
+function getSupabaseAdmin() {
+  if (!supabaseAdmin) {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Image uploads need SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY set in .env.')
+    }
+    supabaseAdmin = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+  }
+  return supabaseAdmin
+}
 const BUCKET = process.env.SUPABASE_UPLOAD_BUCKET || 'product-images'
 
 const upload = multer({
@@ -167,15 +178,21 @@ router.delete('/products/:id', async (req, res) => {
 
 router.post('/uploads', upload.single('image'), async (req, res) => {
   if (!req.file) return res.status(400).json({ success: false, error: { message: 'No image uploaded.' } })
+  let client
+  try {
+    client = getSupabaseAdmin()
+  } catch (e) {
+    return res.status(500).json({ success: false, error: { message: e.message } })
+  }
   const filename = `${Date.now()}-${req.file.originalname.replace(/[^\w.\-]/g, '_')}`
-  const { error } = await supabaseAdmin.storage
+  const { error } = await client.storage
     .from(BUCKET)
     .upload(filename, req.file.buffer, { contentType: req.file.mimetype })
   if (error) {
     console.error('[uploads]', error.message)
     return res.status(500).json({ success: false, error: { message: 'Upload failed.' } })
   }
-  const { data } = supabaseAdmin.storage.from(BUCKET).getPublicUrl(filename)
+  const { data } = client.storage.from(BUCKET).getPublicUrl(filename)
   res.status(201).json({ success: true, data: { url: data.publicUrl } })
 })
 
